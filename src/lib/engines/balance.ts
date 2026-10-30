@@ -18,6 +18,7 @@ export interface BalanceOptions {
   playersPerTeam: number;
   substitutes: number;
   seed: number;
+  allowIncomplete?: boolean;
 }
 export interface BalanceTeam {
   index: number;
@@ -45,14 +46,15 @@ export function generateBalancedTeams(
     options.playersPerTeam < 7 ||
     options.substitutes < 0 ||
     !Number.isInteger(count) ||
-    count < 2 ||
+    count < (options.allowIncomplete ? 1 : 2) ||
     count > 24
   )
     throw new Error(
       "Usá al menos 7 titulares, suplentes no negativos y entre 2 y 24 equipos.",
     );
   if (
-    players.length < count * options.playersPerTeam ||
+    players.length <
+      count * (options.allowIncomplete ? 1 : options.playersPerTeam) ||
     players.length > count * capacity
   )
     throw new Error(
@@ -189,7 +191,11 @@ export function generateBalancedTeams(
     }
     if (
       failed ||
-      teams.some((t) => t.playerIds.length < options.playersPerTeam)
+      teams.some(
+        (t) =>
+          t.playerIds.length <
+          (options.allowIncomplete ? 1 : options.playersPerTeam),
+      )
     )
       continue;
     const sizes = teams.map((t) => t.playerIds.length);

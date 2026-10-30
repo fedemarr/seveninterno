@@ -94,6 +94,9 @@ export interface Registration {
   separate_from: string[];
 }
 export interface Competition {
+  automatic_teams?: boolean;
+  auto_team_size?: number;
+  auto_team_capacity?: number;
   id: string;
   event_id: string;
   name: string;

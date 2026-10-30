@@ -152,6 +152,10 @@ declare e public.events;actor_role text;op text;data jsonb;item jsonb;sub jsonb;
    if exists(select 1 from public.teams where competition_id=comp) then raise exception 'COMPETITION_HAS_TEAMS';end if;
    if exists(select 1 from jsonb_array_elements_text(data->'category_ids') x where not exists(select 1 from public.categories where id=x::uuid)) then raise exception 'CATEGORY';end if;
    update public.competitions set name=data->>'name',category_ids=array(select jsonb_array_elements_text(data->'category_ids'))::uuid[],min_age=(data->>'min_age')::int,max_age=(data->>'max_age')::int,allow_mixed_ages=(data->>'allow_mixed_ages')::boolean,authorization_note=data->>'authorization_note',version=version+1 where id=comp;
+ elsif op='teams.automatic' then
+   comp:=(data->>'competition_id')::uuid;
+   update public.competitions set automatic_teams=(data->>'enabled')::boolean,auto_team_size=(data->>'team_size')::int,auto_team_capacity=(data->>'capacity')::int,version=version+1 where id=comp and event_id=e.id;
+   if not found then raise exception 'NOT_FOUND';end if;
  elsif op='proposal.save' then
    comp:=(data->>'competition_id')::uuid;
    if not exists(select 1 from public.competitions where id=comp and event_id=e.id) then raise exception 'COMPETITION';end if;
@@ -215,6 +219,32 @@ declare e public.events;actor_role text;op text;data jsonb;item jsonb;sub jsonb;
  elsif op='category.update' then
    update public.categories set min_age=(data->>'min_age')::int,max_age=(data->>'max_age')::int where id=(data->>'id')::uuid;
  else raise exception 'UNKNOWN_COMMAND';end if;
+ -- The server computes this plan from the same version of the event. Apply the
+ -- registration change and its roster update under this single transaction lock.
+ if command->'automatic_teams' is not null and command->'automatic_teams'<>'null'::jsonb then
+   comp:=(command->'automatic_teams'->>'competition_id')::uuid;
+   if not exists(select 1 from public.competitions where id=comp and event_id=e.id and automatic_teams) then raise exception 'AUTOMATIC_TEAMS_DISABLED';end if;
+   if command->'automatic_teams'->>'mode'='rebalance' then
+     if exists(select 1 from public.teams where competition_id=comp and published) or exists(select 1 from public.matches where competition_id=comp) or e.state in ('TORNEO_CONFIGURADO','TORNEO_EN_CURSO','TORNEO_FINALIZADO') then raise exception 'ROSTERS_FROZEN';end if;
+     if exists(select 1 from public.teams t where t.competition_id=comp and not exists(select 1 from jsonb_array_elements(command->'automatic_teams'->'teams') x where (x->>'id')::uuid=t.id)) then raise exception 'MISSING_EXISTING_TEAM';end if;
+     delete from public.team_members where team_id in (select id from public.teams where competition_id=comp);
+   elsif command->'automatic_teams'->>'mode'<>'append' then raise exception 'INVALID_AUTO_PLAN';end if;
+   for item in select * from jsonb_array_elements(command->'automatic_teams'->'teams') loop
+     tid:=(item->>'id')::uuid;
+     if coalesce((item->>'is_new')::boolean,false) then
+       if command->'automatic_teams'->>'mode'<>'rebalance' then raise exception 'ROSTERS_FROZEN';end if;
+       insert into public.teams(id,event_id,competition_id,name) values(tid,e.id,comp,item->>'name');
+     elsif not exists(select 1 from public.teams where id=tid and competition_id=comp and event_id=e.id) then raise exception 'NOT_FOUND';end if;
+     for sub in select * from jsonb_array_elements(item->'members') loop
+       rid:=(sub->>'registration_id')::uuid;
+       if not exists(select 1 from public.registrations r join public.competitions c on c.id=comp left join public.player_evaluations v on v.registration_id=r.id where r.id=rid and r.event_id=e.id and r.active and r.payment_status='PAGO_CONFIRMADO' and r.category_id=any(c.category_ids) and r.age between c.min_age and c.max_age and coalesce(v.available,true) and not coalesce(v.excluded,false)) then raise exception 'INELIGIBLE_PLAYER';end if;
+       insert into public.team_members(team_id,registration_id,captain,substitute,locked) values(tid,rid,coalesce((sub->>'captain')::boolean,false),coalesce((sub->>'substitute')::boolean,false),coalesce((sub->>'locked')::boolean,false));
+     end loop;
+     if (select count(*) from public.team_members where team_id=tid)>(select auto_team_capacity from public.competitions where id=comp) then raise exception 'TEAM_CAPACITY';end if;
+     update public.teams set version=version+1 where id=tid;
+   end loop;
+   insert into public.audit_logs(event_id,actor_id,action,target_id,after_data) values(e.id,auth.uid(),'teams.auto.updated',comp::text,command->'automatic_teams');
+ end if;
  update public.events set version=version+1 where id=e.id;
  insert into public.audit_logs(event_id,actor_id,action,target_id,before_data,after_data) values(e.id,auth.uid(),op,coalesce(data->>'id',data->>'competition_id'),before_value,command->'data');
  return jsonb_build_object('success',true);

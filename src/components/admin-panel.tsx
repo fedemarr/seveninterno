@@ -41,6 +41,7 @@ import { Button } from "./ui/button";
 import { RegistrationForm } from "./registration-form";
 import { QuickEvaluations } from "./quick-evaluations";
 import { CompetitionSetup } from "./competition-setup";
+import { AutomaticTeams } from "./automatic-teams";
 import { eligibleForCompetition } from "@/lib/competition-setup";
 import { LateAssignment } from "./late-assignment";
 import {
@@ -222,7 +223,11 @@ export function AdminPanel({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      setMessage(success);
+      setMessage(
+        result.automatic_notice
+          ? `${success} ${result.automatic_notice}`
+          : success,
+      );
       startTransition(() => router.refresh());
       return result.preview;
     } catch (e) {
@@ -608,7 +613,17 @@ export function AdminPanel({
               </p>
             </>
           )}
-          {section === "generador" && (
+          {section === "generador" && selectedGroup && (
+            <AutomaticTeams
+              data={d}
+              competitionId={competition}
+              busy={loading}
+              onConfigure={(command) =>
+                run(command, "Configuración automática guardada.")
+              }
+            />
+          )}
+          {section === "generador" && !selectedGroup?.automatic_teams && (
             <>
               <section className="admin-card">
                 <h2>Propuesta de equipos equilibrados</h2>

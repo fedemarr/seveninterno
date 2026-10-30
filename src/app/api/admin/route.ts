@@ -14,6 +14,11 @@ import { supabaseService } from "@/lib/supabase/server";
 import { sameOrigin } from "@/lib/request";
 import { normalizedPhone } from "@/lib/validation";
 import { eligibleForCompetition } from "@/lib/competition-setup";
+import {
+  planAutomaticTeams,
+  type AutomaticTeamPlan,
+} from "@/lib/engines/automatic-teams";
+import { randomUUID } from "node:crypto";
 export async function POST(request: Request) {
   try {
     if (!sameOrigin(request))
@@ -242,6 +247,14 @@ export async function POST(request: Request) {
       const teams = snapshot.teams.filter(
         (t) => t.competition_id === competitionId,
       );
+      if (
+        teams.some(
+          (t) => snapshot.members.filter((m) => m.team_id === t.id).length < 7,
+        )
+      )
+        throw new Error(
+          "Todavía hay equipos en formación: cada equipo necesita al menos 7 jugadores confirmados para armar el torneo.",
+        );
       const plan = new TournamentFormatEngine().generate(
         teams.map((t) => t.id),
         command.data.settings,
@@ -450,12 +463,77 @@ export async function POST(request: Request) {
       );
       if (conflicts.length) throw new Error(conflicts[0]);
     }
+    let automaticPlan: AutomaticTeamPlan | null = null;
+    let automaticNotice = "";
+    if (
+      [
+        "payment.update",
+        "player.update",
+        "player.evaluate",
+        "teams.automatic",
+      ].includes(command.type)
+    ) {
+      const registrations = snapshot.registrations.map((p) => {
+        if (command.type === "payment.update" && p.id === command.data.id)
+          return { ...p, payment_status: command.data.status };
+        if (command.type === "player.evaluate" && p.id === command.data.id)
+          return { ...p, level: command.data.level };
+        if (command.type === "player.update" && p.id === command.data.id)
+          return { ...p, ...command.data, level: command.data.level || null };
+        return p;
+      });
+      const competitions =
+        command.type === "teams.automatic"
+          ? snapshot.competitions
+              .filter((c) => c.id === command.data.competition_id)
+              .map((c) => ({
+                ...c,
+                automatic_teams: command.data.enabled,
+                auto_team_size: command.data.team_size,
+                auto_team_capacity: command.data.capacity,
+              }))
+          : snapshot.competitions.filter(
+              (c) =>
+                c.automatic_teams &&
+                registrations.some(
+                  (p) =>
+                    "id" in command.data &&
+                    p.id === command.data.id &&
+                    c.category_ids.includes(p.category_id) &&
+                    p.age >= c.min_age &&
+                    p.age <= c.max_age,
+                ),
+            );
+      for (const competition of competitions) {
+        try {
+          const result = planAutomaticTeams(
+            { ...snapshot, registrations },
+            competition,
+            randomUUID,
+          );
+          if (result.plan) {
+            automaticPlan = result.plan;
+            automaticNotice = result.notice;
+            break;
+          }
+          if (result.notice) automaticNotice = result.notice;
+        } catch (error) {
+          automaticNotice = `Los datos se guardaron. La asignación automática necesita revisión: ${errorMessage(error)}`;
+        }
+      }
+    }
     const { error } = await supabaseService().rpc("admin_apply", {
-      command: { type, data, version, actor_id: user.id },
+      command: {
+        type,
+        data,
+        version,
+        actor_id: user.id,
+        automatic_teams: automaticPlan,
+      },
     });
     if (error) throw new Error(error.message);
     return NextResponse.json(
-      { success: true, preview },
+      { success: true, preview, automatic_notice: automaticNotice },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

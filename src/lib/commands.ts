@@ -102,6 +102,20 @@ export const commandSchema = z.object({
       data: competitionData.extend({ id }),
     }),
     z.object({
+      type: z.literal("teams.automatic"),
+      data: z
+        .object({
+          competition_id: id,
+          enabled: z.boolean(),
+          team_size: z.number().int().min(7).max(15),
+          capacity: z.number().int().min(7).max(25),
+        })
+        .refine(
+          (d) => d.capacity >= d.team_size,
+          "La capacidad debe alcanzar el tamaño previsto del equipo.",
+        ),
+    }),
+    z.object({
       type: z.enum(["proposal.generate", "teams.confirm"]),
       data: z.object({
         competition_id: id,
