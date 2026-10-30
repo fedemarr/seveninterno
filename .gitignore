@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env*
+*.tsbuildinfo
+coverage/
+*.log
+.vercel/
+backups/
+/WhatsApp*
+/escudo.png
+!.env.example

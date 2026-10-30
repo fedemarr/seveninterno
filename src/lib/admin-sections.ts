@@ -1,0 +1,15 @@
+export const ADMIN_PATHS = [
+  "dashboard",
+  "inscripciones",
+  "pagos",
+  "jugadores",
+  "evaluaciones",
+  "equipos",
+  "generador",
+  "configuracion-torneo",
+  "fixture",
+  "torneo",
+  "resultados",
+  "copas",
+  "configuracion",
+];

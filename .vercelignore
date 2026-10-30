@@ -1,0 +1,9 @@
+.env*
+!.env.example
+WhatsApp*
+escudo.png
+SEVEN_INTERNO_PROMPT_CODEX.md
+tests/
+coverage/
+*.log
+*.tsbuildinfo
