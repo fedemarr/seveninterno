@@ -42,6 +42,7 @@ import { RegistrationForm } from "./registration-form";
 import { QuickEvaluations } from "./quick-evaluations";
 import { CompetitionSetup } from "./competition-setup";
 import { AutomaticTeams } from "./automatic-teams";
+import { OnsitePlayerForm } from "./onsite-player-form";
 import { eligibleForCompetition } from "@/lib/competition-setup";
 import { LateAssignment } from "./late-assignment";
 import {
@@ -141,6 +142,7 @@ export function AdminPanel({
     ),
     [editing, setEditing] = useState<Registration | null>(null),
     [adding, setAdding] = useState(false),
+    [addingTeamId, setAddingTeamId] = useState(""),
     [preview, setPreview] = useState<Proposal | null>(null),
     [planPreview, setPlanPreview] = useState<FormatPlan | null>(null);
   const [options, setOptions] = useState({
@@ -349,9 +351,16 @@ export function AdminPanel({
               <p className="eyebrow">SEVEN INTERNO · TONY LEYES</p>
               <h1>{ADMIN_SECTIONS.find((s) => s.path === section)?.name}</h1>
             </div>
-            {["dashboard", "inscripciones", "jugadores"].includes(section) &&
+            {["dashboard", "inscripciones", "jugadores", "generador"].includes(
+              section,
+            ) &&
               d.role !== "scorer" && (
-                <Button onClick={() => setAdding(true)}>
+                <Button
+                  onClick={() => {
+                    setAddingTeamId("");
+                    setAdding(true);
+                  }}
+                >
                   <Plus size={18} /> Agregar jugador
                 </Button>
               )}
@@ -621,6 +630,30 @@ export function AdminPanel({
               onConfigure={(command) =>
                 run(command, "Configuración automática guardada.")
               }
+              onAddPlayer={(teamId) => {
+                setAddingTeamId(teamId ?? "");
+                setAdding(true);
+              }}
+              onMove={async (playerId, teamId) => {
+                const member = d.members.find(
+                  (m) => m.registration_id === playerId,
+                );
+                await act(
+                  {
+                    type: "member.move",
+                    data: {
+                      registration_id: playerId,
+                      team_id: teamId,
+                      captain: member?.captain ?? false,
+                      substitute: member?.substitute ?? false,
+                      locked: true,
+                      override_lock: true,
+                      impact_confirmed: true,
+                    },
+                  },
+                  "Jugador movido. La asignación manual queda fijada.",
+                );
+              }}
             />
           )}
           {section === "generador" && !selectedGroup?.automatic_teams && (
@@ -1894,23 +1927,41 @@ export function AdminPanel({
             </button>
             <h2 id="add-title">Agregar jugador</h2>
             <p className="muted">
-              El pago queda pendiente. Confirmalo y evaluá al jugador antes de
-              asignarlo.
+              {section === "generador"
+                ? "Alta el día del Seven: cargá sus datos, confirmá el pago si corresponde y elegí un equipo desde acá."
+                : "El pago queda pendiente. Confirmalo y evaluá al jugador antes de asignarlo."}
             </p>
-            <RegistrationForm
-              categories={d.categories}
-              positions={d.positions}
-              event={d.event}
-              connected
-              admin
-              onDone={async (input) => {
-                await act(
-                  { type: "player.create", data: input },
-                  "Jugador agregado. Confirmá el pago y asigná su evaluación.",
-                );
-                setAdding(false);
-              }}
-            />
+            {section === "generador" ? (
+              <OnsitePlayerForm
+                data={d}
+                competitionId={competition}
+                initialTeamId={addingTeamId}
+                onSubmit={async (input) => {
+                  await act(
+                    { type: "player.onsite.create", data: input },
+                    input.payment_confirmed
+                      ? "Jugador agregado con pago confirmado."
+                      : "Jugador agregado con inscripción pendiente de pago.",
+                  );
+                  setAdding(false);
+                }}
+              />
+            ) : (
+              <RegistrationForm
+                categories={d.categories}
+                positions={d.positions}
+                event={d.event}
+                connected
+                admin
+                onDone={async (input) => {
+                  await act(
+                    { type: "player.create", data: input },
+                    "Jugador agregado. Confirmá el pago y asigná su evaluación.",
+                  );
+                  setAdding(false);
+                }}
+              />
+            )}
           </section>
         </div>
       )}
@@ -1938,6 +1989,7 @@ function TournamentForm({
     <Form
       onSubmit={(fd) =>
         onSubmit({
+          minGroupMatches: asNumber(fd, "groupMinimum"),
           courts: asNumber(fd, "courts"),
           start: new Date(text(fd, "start")).toISOString(),
           end: new Date(text(fd, "end")).toISOString(),
@@ -1976,6 +2028,13 @@ function TournamentForm({
         </Field>
         {[
           { key: "courts", name: "Canchas", value: s.courts, min: 1, max: 8 },
+          {
+            key: "groupMinimum",
+            name: "Partidos de grupos por equipo (mínimo)",
+            value: s.minGroupMatches ?? 3,
+            min: 0,
+            max: 23,
+          },
           {
             key: "duration",
             name: "Minutos por partido",

@@ -12,6 +12,7 @@ const competitionData = z.object({
   authorization_note: z.string().max(500),
 });
 export const settingsSchema = z.object({
+  minGroupMatches: z.number().int().min(0).max(23).default(3),
   courts: z.number().int().min(1).max(8),
   start: z.string().datetime({ offset: true }),
   end: z.string().datetime({ offset: true }),
@@ -73,6 +74,21 @@ export const commandSchema = z.object({
       data: z.object({ id, level: z.enum(["A", "B", "C"]) }),
     }),
     z.object({ type: z.literal("player.create"), data: registrationSchema }),
+    z.object({
+      type: z.literal("player.onsite.create"),
+      data: z
+        .object({
+          input: registrationSchema,
+          competition_id: id,
+          payment_confirmed: z.boolean(),
+          level: z.enum(["A", "B", "C", ""]),
+          team_id: z.union([id, z.literal("")]),
+        })
+        .refine(
+          (d) => !d.team_id || d.payment_confirmed,
+          "Confirmá el pago para incorporar al jugador a un equipo.",
+        ),
+    }),
     z.object({
       type: z.literal("player.details"),
       data: z.object({ id, input: registrationSchema }),

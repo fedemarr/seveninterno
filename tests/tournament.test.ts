@@ -21,6 +21,23 @@ const plan = (n: number) =>
     { eventId: "event", competitionId: "comp" },
   );
 describe("Formatos de torneo 4–24 equipos", () => {
+  it("con 12 equipos permite tres partidos de grupos y tres copas con semifinales y final", () => {
+    const p = plan(12);
+    expect(p.groups.map((g) => g.teamIds.length)).toEqual([4, 4, 4]);
+    expect(p.matches.filter((m) => m.phase === "group")).toHaveLength(18);
+    for (const id of p.groups.flatMap((g) => g.teamIds))
+      expect(
+        p.matches.filter(
+          (m) => m.phase === "group" && (m.home_id === id || m.away_id === id),
+        ),
+      ).toHaveLength(3);
+    for (const phase of ["gold", "silver", "milk"]) {
+      const matches = p.matches.filter((m) => m.phase === phase);
+      expect(matches).toHaveLength(3);
+      expect(matches.filter((m) => m.round === 1)).toHaveLength(2);
+      expect(matches.filter((m) => m.round === 2)).toHaveLength(1);
+    }
+  });
   it.each(Array.from({ length: 21 }, (_, i) => i + 4))(
     "genera %i equipos sin duplicados, colisiones ni copas vacías",
     (n) => {

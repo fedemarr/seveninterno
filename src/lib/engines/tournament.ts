@@ -138,6 +138,7 @@ export class TournamentFormatEngine {
     const candidates: FormatPlan[] = [];
     for (let groupCount = 1; groupCount <= Math.floor(n / 3); groupCount++) {
       const minSize = Math.floor(n / groupCount);
+      if (minSize - 1 < (settings.minGroupMatches ?? 0)) continue;
       const requested = (["gold", "silver", "milk"] as const).filter(
         (c) => settings[c],
       );

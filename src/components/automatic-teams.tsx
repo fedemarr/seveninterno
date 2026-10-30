@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Users, Settings2 } from "lucide-react";
+import { Check, Users, Settings2, Plus } from "lucide-react";
+import { RosterBoard } from "./roster-board";
 import type { AdminSnapshot } from "@/lib/data";
 import type { AdminCommand } from "@/lib/commands";
 import { Button } from "./ui/button";
@@ -11,11 +12,15 @@ export function AutomaticTeams({
   competitionId,
   busy,
   onConfigure,
+  onMove,
+  onAddPlayer,
 }: {
   data: AdminSnapshot;
   competitionId: string;
   busy: boolean;
   onConfigure: (command: AdminCommand) => void;
+  onMove: (playerId: string, teamId: string) => Promise<void>;
+  onAddPlayer: (teamId?: string) => void;
 }) {
   const competition = data.competitions.find((c) => c.id === competitionId);
   const [size, setSize] = useState(competition?.auto_team_size ?? 10),
@@ -63,6 +68,14 @@ export function AutomaticTeams({
               : "Automático pausado"}
           </span>
         </div>
+        <Button
+          type="button"
+          disabled={busy || data.role === "scorer"}
+          onClick={() => onAddPlayer()}
+        >
+          <Plus size={18} />
+          Agregar jugador
+        </Button>
         {(!competition.automatic_teams ||
           (!teams.length && confirmed.length > 0)) && (
           <Button
@@ -144,48 +157,13 @@ export function AutomaticTeams({
           </div>
         </details>
       </section>
-      <div className="teams-grid automatic-team-grid">
-        {teams.map((team) => {
-          const members = data.members.filter((m) => m.team_id === team.id);
-          const players = members
-            .map((m) =>
-              data.registrations.find((r) => r.id === m.registration_id),
-            )
-            .filter((p) => p !== undefined);
-          return (
-            <section className="admin-card automatic-team-card" key={team.id}>
-              <div className="automatic-team-title">
-                <h2>{team.name}</h2>
-                <span>{players.length} jugadores</span>
-              </div>
-              <small className="automatic-team-state">
-                {team.published
-                  ? "Publicado"
-                  : players.length < 7
-                    ? `En formación · faltan ${7 - players.length} para completar 7`
-                    : "Borrador listo"}
-              </small>
-              <ul>
-                {players.map((p) => (
-                  <li key={p.id}>
-                    <span>
-                      {p.first_name} {p.last_name}
-                    </span>
-                    <b className={`level level-${p.level ?? "none"}`}>
-                      {p.level ?? "B*"}
-                    </b>
-                  </li>
-                ))}
-              </ul>
-              {!players.length && (
-                <p className="muted">
-                  Los próximos confirmados van a aparecer acá.
-                </p>
-              )}
-            </section>
-          );
-        })}
-      </div>
+      <RosterBoard
+        data={data}
+        teams={teams}
+        busy={busy}
+        onMove={onMove}
+        onAdd={onAddPlayer}
+      />
       {!teams.length && (
         <div className="admin-card admin-empty">
           <Users size={36} />

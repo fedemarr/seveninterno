@@ -1,5 +1,6 @@
 import pg from "pg";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 if (process.stdin.isTTY) process.stdin.setRawMode(true);
 console.log(
   "Ready for automatic-team database test connection on hidden stdin.",
@@ -51,6 +52,42 @@ try {
     (await db.query("select public.admin_snapshot() value")).rows[0].value;
   let state = await snapshot();
   const comp = state.competitions.find((c) => c.name === "Seven Interno");
+  await db.query("delete from public.matches where competition_id=$1", [
+    comp.id,
+  ]);
+  await db.query(
+    "delete from public.tournament_plans where competition_id=$1",
+    [comp.id],
+  );
+  await db.query(
+    "update public.teams set published=false where competition_id=$1",
+    [comp.id],
+  );
+  const category = state.categories.find((c) => c.name === "Plantel Superior"),
+    position = state.positions.find((p) => p.name === "Wing");
+  for (let i = 0; i < 2; i++) {
+    state = await snapshot();
+    await db.query("select public.admin_apply($1)", [
+      {
+        type: "player.create",
+        version: state.event.version,
+        actor_id: actor,
+        data: {
+          first_name: "PRUEBA AUTO ROLLBACK",
+          last_name: randomUUID(),
+          age: 25,
+          category_id: category.id,
+          position_id: position.id,
+          phone: "000009991" + i,
+          consent: true,
+          public_consent: false,
+          guardian_consent: false,
+          website: "",
+        },
+      },
+    ]);
+  }
+  state = await snapshot();
   const teams = state.teams.filter((t) => t.competition_id === comp.id);
   check(teams.length >= 2, "Existing test teams available");
   const plan = {

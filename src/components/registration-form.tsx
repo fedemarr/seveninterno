@@ -31,6 +31,7 @@ export function RegistrationForm({
   onDone,
   initial,
   submitLabel,
+  extraFields,
 }: {
   categories: Category[];
   positions: Position[];
@@ -40,6 +41,7 @@ export function RegistrationForm({
   onDone?: (input: RegistrationInput) => Promise<void>;
   initial?: Partial<RegistrationInput>;
   submitLabel?: string;
+  extraFields?: React.ReactNode;
 }) {
   const [receipt, setReceipt] = useState<Receipt | null>(null),
     [error, setError] = useState(""),
@@ -317,6 +319,7 @@ export function RegistrationForm({
           </span>
         </label>
       </div>
+      {extraFields}
       {error && (
         <p className="form-alert error" role="alert">
           {error}

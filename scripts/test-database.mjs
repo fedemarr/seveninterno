@@ -47,6 +47,13 @@ try {
       "select id from auth.users where email='fede@administradorlc.com'",
     )
   ).rows[0].id;
+  await db.query("select set_config('request.jwt.claim.sub',$1,true)", [actor]);
+  const baseline = (await db.query("select public.admin_snapshot() value"))
+    .rows[0].value;
+  await db.query(
+    "update public.events set registration_open=false,state='BORRADOR' where id=$1",
+    [e.id],
+  );
   const cat = (
     await db.query(
       "select id from public.categories where name='Plantel Superior'",
@@ -198,7 +205,7 @@ try {
   const finances = (await db.query("select public.admin_snapshot() as value"))
     .rows[0].value;
   check(
-    Number(finances.payment_total) === 1000,
+    Number(finances.payment_total) === Number(baseline.payment_total) + 1000,
     "Revenue uses recorded payment amount",
   );
   await apply("competition.create", {
@@ -428,7 +435,8 @@ try {
         "select count(*)::int n from public.registrations where event_id=$1",
         [e.id],
       )
-    ).rows[0].n === 3,
+    ).rows[0].n ===
+      baseline.registrations.length + 3,
     "Preserves previous edition registrations",
   );
   await db.query("rollback");

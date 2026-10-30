@@ -158,6 +158,7 @@ export interface Standing {
   points: number;
 }
 export interface TournamentSettings {
+  minGroupMatches: number;
   courts: number;
   start: string;
   end: string;
@@ -174,6 +175,7 @@ export interface TournamentSettings {
   crossGroup: "pointsPerGame" | "points";
 }
 export const DEFAULT_SETTINGS: TournamentSettings = {
+  minGroupMatches: 3,
   courts: 2,
   start: "2026-11-21T10:00:00-03:00",
   end: "2026-11-21T20:00:00-03:00",

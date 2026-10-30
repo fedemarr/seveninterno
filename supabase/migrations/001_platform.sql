@@ -128,6 +128,22 @@ declare e public.events;actor_role text;op text;data jsonb;item jsonb;sub jsonb;
    if cat.id is null or (data->>'age')::int not between cat.min_age and cat.max_age then raise exception 'CATEGORY_AGE';end if;
    insert into public.players(first_name,last_name,phone,identity_key) values(data->>'first_name',data->>'last_name',data->>'phone',lower(trim(data->>'first_name')||'|'||trim(data->>'last_name')||'|'||regexp_replace(data->>'phone','[^0-9]','','g'))) on conflict(identity_key) do update set identity_key=excluded.identity_key returning id into pid;
    insert into public.registrations(event_id,player_id,age,category_id,position_id,guardian_name,guardian_phone,guardian_consent,consent,public_consent) values(e.id,pid,(data->>'age')::int,cat.id,(data->>'position_id')::uuid,data->>'guardian_name',data->>'guardian_phone',coalesce((data->>'guardian_consent')::boolean,false),(data->>'consent')::boolean,(data->>'public_consent')::boolean);
+ elsif op='player.onsite.create' then
+   item:=data->'input';rid:=(data->>'registration_id')::uuid;comp:=(data->>'competition_id')::uuid;
+   select * into cat from public.categories where id=(item->>'category_id')::uuid;
+   if cat.id is null or (item->>'age')::int not between cat.min_age and cat.max_age then raise exception 'CATEGORY_AGE';end if;
+   if not exists(select 1 from public.competitions where id=comp and event_id=e.id and cat.id=any(category_ids) and (item->>'age')::int between min_age and max_age) then raise exception 'INELIGIBLE_PLAYER';end if;
+   insert into public.players(first_name,last_name,phone,identity_key) values(item->>'first_name',item->>'last_name',item->>'phone',lower(trim(item->>'first_name')||'|'||trim(item->>'last_name')||'|'||regexp_replace(item->>'phone','[^0-9]','','g'))) on conflict(identity_key) do update set identity_key=excluded.identity_key returning id into pid;
+   insert into public.registrations(id,event_id,player_id,age,category_id,position_id,guardian_name,guardian_phone,guardian_consent,consent,public_consent,payment_status) values(rid,e.id,pid,(item->>'age')::int,cat.id,(item->>'position_id')::uuid,item->>'guardian_name',item->>'guardian_phone',coalesce((item->>'guardian_consent')::boolean,false),(item->>'consent')::boolean,(item->>'public_consent')::boolean,case when (data->>'payment_confirmed')::boolean then 'PAGO_CONFIRMADO' else 'PENDIENTE_PAGO' end);
+   insert into public.player_evaluations(registration_id,level,notes,updated_by) values(rid,nullif(data->>'level',''),'Alta presencial desde el panel de equipos.',auth.uid());
+   if (data->>'payment_confirmed')::boolean then insert into public.payment_records(registration_id,previous_status,status,amount,actor_id) values(rid,'PENDIENTE_PAGO','PAGO_CONFIRMADO',e.amount,auth.uid());end if;
+   tid:=nullif(data->>'team_id','')::uuid;
+   if tid is not null then
+     if not (data->>'payment_confirmed')::boolean then raise exception 'PAYMENT_REQUIRED';end if;
+     if not exists(select 1 from public.teams where id=tid and competition_id=comp and event_id=e.id) then raise exception 'NOT_FOUND';end if;
+     if (select count(*) from public.team_members where team_id=tid)>=(select auto_team_capacity from public.competitions where id=comp) then raise exception 'TEAM_CAPACITY';end if;
+     insert into public.team_members(team_id,registration_id,substitute,locked) values(tid,rid,(select count(*)>=7 from public.team_members where team_id=tid),true);
+   end if;
  elsif op='player.details' then
    rid:=(data->>'id')::uuid;item:=data->'input';
    if not exists(select 1 from public.registrations where id=rid and event_id=e.id) then raise exception 'NOT_FOUND';end if;
@@ -187,6 +203,7 @@ declare e public.events;actor_role text;op text;data jsonb;item jsonb;sub jsonb;
    rid:=(data->>'registration_id')::uuid;tid:=nullif(data->>'team_id','')::uuid;
    if exists(select 1 from public.team_members m join public.teams t on t.id=m.team_id where m.registration_id=rid and t.event_id=e.id and (m.locked or exists(select 1 from public.player_evaluations where registration_id=rid and assignment_locked))) and not coalesce((data->>'override_lock')::boolean,false) then raise exception 'ASSIGNMENT_LOCKED';end if;
    if tid is not null and not exists(select 1 from public.teams t join public.competitions c on c.id=t.competition_id join public.registrations r on r.id=rid where t.id=tid and t.event_id=e.id and r.event_id=e.id and r.active and r.payment_status='PAGO_CONFIRMADO' and r.category_id=any(c.category_ids) and r.age between c.min_age and c.max_age) then raise exception 'INELIGIBLE_PLAYER';end if;
+   if tid is not null and (select count(*) from public.team_members where team_id=tid and registration_id<>rid)>=(select c.auto_team_capacity from public.teams t join public.competitions c on c.id=t.competition_id where t.id=tid) then raise exception 'TEAM_CAPACITY';end if;
    if not exists(select 1 from public.registrations where id=rid and event_id=e.id) then raise exception 'NOT_FOUND';end if;
    delete from public.team_members where registration_id=rid;
    if tid is not null then

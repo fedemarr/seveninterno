@@ -19,6 +19,8 @@ import {
   type AutomaticTeamPlan,
 } from "@/lib/engines/automatic-teams";
 import { randomUUID } from "node:crypto";
+import type { Registration } from "@/lib/domain";
+import { validateRosterPlacement } from "@/lib/roster-placement";
 export async function POST(request: Request) {
   try {
     if (!sameOrigin(request))
@@ -135,6 +137,69 @@ export async function POST(request: Request) {
     let type: string = command.type;
     let data: unknown = command.data;
     let preview: unknown = null;
+    let onsitePlayer: Registration | null = null;
+    if (command.type === "player.onsite.create") {
+      if (snapshot.event.state === "TORNEO_FINALIZADO")
+        throw new Error(
+          "La edición está finalizada. Abrí una nueva edición para inscribir jugadores.",
+        );
+      const comp = snapshot.competitions.find(
+        (c) => c.id === command.data.competition_id,
+      );
+      if (!comp) throw new Error("La competencia no existe.");
+      const input = {
+        ...command.data.input,
+        phone: normalizedPhone(command.data.input.phone),
+      };
+      if (
+        !comp.category_ids.includes(input.category_id) ||
+        input.age < comp.min_age ||
+        input.age > comp.max_age
+      )
+        throw new Error(
+          "La edad o la categoría no está habilitada para este Seven.",
+        );
+      const registrationId = randomUUID();
+      onsitePlayer = {
+        ...input,
+        id: registrationId,
+        event_id: snapshot.event.id,
+        player_id: "",
+        guardian_name: input.guardian_name ?? null,
+        guardian_phone: input.guardian_phone ?? null,
+        guardian_consent: input.guardian_consent ?? false,
+        payment_status: command.data.payment_confirmed
+          ? "PAGO_CONFIRMADO"
+          : "PENDIENTE_PAGO",
+        active: true,
+        created_at: new Date().toISOString(),
+        version: 0,
+        level: command.data.level || null,
+        notes: "Alta presencial desde el panel de equipos.",
+        secondary_positions: [],
+        available: true,
+        assignment_locked: false,
+        excluded: false,
+        together_with: [],
+        separate_from: [],
+      };
+      if (command.data.team_id) {
+        const team = snapshot.teams.find(
+          (t) => t.id === command.data.team_id && t.competition_id === comp.id,
+        );
+        if (!team) throw new Error("El equipo de destino no existe.");
+        validateRosterPlacement(
+          {
+            ...snapshot,
+            registrations: [...snapshot.registrations, onsitePlayer],
+          },
+          onsitePlayer,
+          team,
+        );
+      }
+      data = { ...command.data, input, registration_id: registrationId };
+      preview = { registration_id: registrationId };
+    }
     if (command.type === "competition.update") {
       if (!snapshot.competitions.some((c) => c.id === command.data.id))
         throw new Error("La competencia no existe.");
@@ -306,36 +371,7 @@ export async function POST(request: Request) {
         (r) => r.id === command.data.registration_id,
       );
       if (target && player) {
-        const members = snapshot.members.filter(
-          (m) => m.team_id === target.id && m.registration_id !== player.id,
-        );
-        if (player.excluded || !player.available)
-          throw new Error("El jugador está excluido o no disponible.");
-        if (
-          player.together_with.some(
-            (id) => !members.some((m) => m.registration_id === id),
-          ) ||
-          snapshot.registrations.some(
-            (other) =>
-              other.together_with.includes(player.id) &&
-              !members.some((m) => m.registration_id === other.id),
-          )
-        )
-          throw new Error(
-            "La asignación separaría jugadores que deben permanecer juntos. Revisá las restricciones.",
-          );
-        for (const member of members) {
-          const other = snapshot.registrations.find(
-            (r) => r.id === member.registration_id,
-          )!;
-          if (
-            player.separate_from.includes(other.id) ||
-            other.separate_from.includes(player.id)
-          )
-            throw new Error(
-              "Estos jugadores tienen una restricción de separación.",
-            );
-        }
+        validateRosterPlacement(snapshot, player, target);
       }
     }
     if (command.type === "match.result") {
@@ -471,7 +507,12 @@ export async function POST(request: Request) {
         "player.update",
         "player.evaluate",
         "teams.automatic",
-      ].includes(command.type)
+        "player.onsite.create",
+      ].includes(command.type) &&
+      !(
+        command.type === "player.onsite.create" &&
+        (command.data.team_id || !command.data.payment_confirmed)
+      )
     ) {
       const registrations = snapshot.registrations.map((p) => {
         if (command.type === "payment.update" && p.id === command.data.id)
@@ -482,6 +523,7 @@ export async function POST(request: Request) {
           return { ...p, ...command.data, level: command.data.level || null };
         return p;
       });
+      if (onsitePlayer) registrations.push(onsitePlayer);
       const competitions =
         command.type === "teams.automatic"
           ? snapshot.competitions
@@ -497,8 +539,8 @@ export async function POST(request: Request) {
                 c.automatic_teams &&
                 registrations.some(
                   (p) =>
-                    "id" in command.data &&
-                    p.id === command.data.id &&
+                    (p.id === onsitePlayer?.id ||
+                      ("id" in command.data && p.id === command.data.id)) &&
                     c.category_ids.includes(p.category_id) &&
                     p.age >= c.min_age &&
                     p.age <= c.max_age,
