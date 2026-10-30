@@ -40,6 +40,8 @@ import { money } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { RegistrationForm } from "./registration-form";
 import { QuickEvaluations } from "./quick-evaluations";
+import { CompetitionSetup } from "./competition-setup";
+import { eligibleForCompetition } from "@/lib/competition-setup";
 import { LateAssignment } from "./late-assignment";
 import {
   MatchCard,
@@ -133,7 +135,9 @@ export function AdminPanel({
     [query, setQuery] = useState(""),
     [status, setStatus] = useState(""),
     [category, setCategory] = useState(""),
-    [competition, setCompetition] = useState(d.competitions[0]?.id ?? ""),
+    [selectedCompetition, setCompetition] = useState(
+      d.competitions[0]?.id ?? "",
+    ),
     [editing, setEditing] = useState<Registration | null>(null),
     [adding, setAdding] = useState(false),
     [preview, setPreview] = useState<Proposal | null>(null),
@@ -145,6 +149,25 @@ export function AdminPanel({
     seed: 1,
   });
   const [matchEdit, setMatchEdit] = useState<string | null>(null);
+  const competition = selectedCompetition || d.competitions[0]?.id || "";
+  const selectedGroup = d.competitions.find((c) => c.id === competition);
+  const readyPlayers = selectedGroup
+    ? d.registrations.filter((p) =>
+        eligibleForCompetition(p, selectedGroup, d.teams, d.members),
+      )
+    : [];
+  const groupTeamCount =
+    options.teamCount ??
+    Math.max(
+      2,
+      Math.ceil(
+        readyPlayers.length / (options.playersPerTeam + options.substitutes),
+      ),
+    );
+  const neededPlayers = groupTeamCount * options.playersPerTeam;
+  const tooManyPlayers =
+    readyPlayers.length >
+    groupTeamCount * (options.playersPerTeam + options.substitutes);
   const modalOpen = Boolean(editing) || adding;
   useEffect(() => {
     if (!modalOpen) return;
@@ -233,7 +256,9 @@ export function AdminPanel({
     );
   const compPlan = d.plans.find((p) => p.competition_id === competition)?.plan;
   const compSelect = (
-    <Field label="Competencia">
+    <Field
+      label={section === "generador" ? "Jugadores a incluir" : "Competencia"}
+    >
       <select
         value={competition}
         onChange={(e) => {
@@ -592,7 +617,39 @@ export function AdminPanel({
                   confirmado. Generar guarda un borrador; confirmar crea los
                   equipos sin publicarlos.
                 </p>
-                {compSelect}
+                {d.competitions.length ? (
+                  <>
+                    {compSelect}
+                    <details className="add-player-group">
+                      <summary>Agregar otro grupo de jugadores</summary>
+                      <CompetitionSetup
+                        categories={d.categories}
+                        competitions={d.competitions}
+                        players={d.registrations}
+                        busy={loading}
+                        onCreate={(data) =>
+                          run(
+                            { type: "competition.create", data },
+                            "Grupo creado. Ya podés seleccionarlo para armar equipos.",
+                          )
+                        }
+                      />
+                    </details>
+                  </>
+                ) : (
+                  <CompetitionSetup
+                    categories={d.categories}
+                    competitions={d.competitions}
+                    players={d.registrations}
+                    busy={loading}
+                    onCreate={(data) =>
+                      run(
+                        { type: "competition.create", data },
+                        "Grupo creado. Ya podés generar los equipos.",
+                      )
+                    }
+                  />
+                )}
                 <div className="form-grid four-cols">
                   <Field label="Titulares por equipo">
                     <input
@@ -655,8 +712,35 @@ export function AdminPanel({
                     />
                   </Field>
                 </div>
+                {selectedGroup && (
+                  <div
+                    className={`generator-readiness ${readyPlayers.length < neededPlayers || tooManyPlayers ? "needs-players" : ""}`}
+                  >
+                    <strong>
+                      {readyPlayers.length} jugadores listos en{" "}
+                      {selectedGroup.name}
+                    </strong>
+                    <p>
+                      {readyPlayers.length < neededPlayers
+                        ? `Necesitás al menos ${neededPlayers} jugadores habilitados para ${groupTeamCount} equipos de ${options.playersPerTeam}.`
+                        : tooManyPlayers
+                          ? "La capacidad elegida no alcanza: sumá equipos o suplentes."
+                          : `Podés armar ${groupTeamCount} equipos. La propuesta se guarda sin publicarla.`}
+                    </p>
+                    {readyPlayers.length < neededPlayers && (
+                      <Link href="/admin/pagos">
+                        Revisar pagos pendientes →
+                      </Link>
+                    )}
+                  </div>
+                )}
                 <Button
-                  disabled={!competition || loading}
+                  disabled={
+                    !competition ||
+                    loading ||
+                    readyPlayers.length < neededPlayers ||
+                    tooManyPlayers
+                  }
                   onClick={async () => {
                     try {
                       const p = await act(

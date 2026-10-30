@@ -13,6 +13,7 @@ import { errorMessage } from "@/lib/errors";
 import { supabaseService } from "@/lib/supabase/server";
 import { sameOrigin } from "@/lib/request";
 import { normalizedPhone } from "@/lib/validation";
+import { eligibleForCompetition } from "@/lib/competition-setup";
 export async function POST(request: Request) {
   try {
     if (!sameOrigin(request))
@@ -192,15 +193,12 @@ export async function POST(request: Request) {
           secondaryPositions: r.secondary_positions,
           paid: r.payment_status === "PAGO_CONFIRMADO",
           available: r.available && r.active,
-          eligible:
-            competition.category_ids.includes(r.category_id) &&
-            r.age >= competition.min_age &&
-            r.age <= competition.max_age &&
-            !snapshot.members.some(
-              (m) =>
-                m.registration_id === r.id &&
-                !existing.some((t) => t.id === m.team_id),
-            ),
+          eligible: eligibleForCompetition(
+            r,
+            competition,
+            snapshot.teams,
+            snapshot.members,
+          ),
           excluded: r.excluded,
           together: r.together_with,
           separate: r.separate_from,
