@@ -128,8 +128,8 @@ export default async function Home() {
               <div>
                 <h3>Hay un lugar para vos</h3>
                 <p>
-                  Plantel Superior, Padres, Veteranos y juveniles de M14 a M19,
-                  en competencias según su elegibilidad.
+                  Plantel Superior, PADRENCES, Veteranos y juveniles de M14 a
+                  M19, en competencias según su elegibilidad.
                 </p>
               </div>
               <span className="item-number">01</span>

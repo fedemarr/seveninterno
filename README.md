@@ -26,7 +26,7 @@ En una instalación sin credenciales, el portal muestra estados vacíos y bloque
 
 ## Base de datos y autenticación
 
-Aplicar en orden `supabase/migrations/001_platform.sql` a `004_operations.sql` desde el SQL Editor de Supabase. En el proyecto configurado durante esta implementación ya se aplicaron. La primera migración es para una base vacía; las siguientes actualizan funciones sin borrar datos. `scripts/setup-db.mjs` verifica el esquema y permite aplicar las actualizaciones usando JSON en stdin oculto; no requiere guardar la contraseña PostgreSQL.
+Aplicar en orden `supabase/migrations/001_platform.sql` a `005_padrences.sql` desde el SQL Editor de Supabase. En el proyecto configurado durante esta implementación ya se aplicaron. La primera migración es para una base vacía; las siguientes actualizan funciones y nombres de categorías sin borrar datos. `scripts/setup-db.mjs` verifica el esquema y permite aplicar las actualizaciones usando JSON en stdin oculto; no requiere guardar la contraseña PostgreSQL.
 
 Crear usuarios en Supabase Auth y asignar su UUID en `admin_users` con rol `owner`, `organizer` o `scorer`. No existe registro público de administradores. `scripts/create-admins.mjs` permite el alta mediante la API administrativa con las credenciales en stdin. Las cuentas de Fede y Bauti ya fueron creadas en el proyecto conectado; sus contraseñas no están en estos archivos.
 

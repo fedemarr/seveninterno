@@ -1,6 +1,6 @@
 export const CATEGORIES = [
   "Plantel Superior",
-  "Padres",
+  "PADRENCES",
   "Veteranos",
   "M14",
   "M15",
