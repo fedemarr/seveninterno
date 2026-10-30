@@ -1,7 +1,8 @@
 .env*
 !.env.example
 WhatsApp*
-escudo.png
+/escudo.png
+!/public/media/escudo.png
 SEVEN_INTERNO_PROMPT_CODEX.md
 tests/
 coverage/
