@@ -3,6 +3,14 @@ import { EVENT_STATES, PAYMENT_STATES } from "./domain";
 import { registrationSchema } from "./validation";
 const id = z.uuid();
 const ids = z.array(id).max(500);
+const competitionData = z.object({
+  name: z.string().trim().min(2).max(80),
+  category_ids: ids.min(1),
+  min_age: z.number().int().min(13).max(90),
+  max_age: z.number().int().min(13).max(90),
+  allow_mixed_ages: z.boolean(),
+  authorization_note: z.string().max(500),
+});
 export const settingsSchema = z.object({
   courts: z.number().int().min(1).max(8),
   start: z.string().datetime({ offset: true }),
@@ -87,14 +95,11 @@ export const commandSchema = z.object({
     }),
     z.object({
       type: z.literal("competition.create"),
-      data: z.object({
-        name: z.string().trim().min(2).max(80),
-        category_ids: ids.min(1),
-        min_age: z.number().int().min(13).max(90),
-        max_age: z.number().int().min(13).max(90),
-        allow_mixed_ages: z.boolean(),
-        authorization_note: z.string().max(500),
-      }),
+      data: competitionData,
+    }),
+    z.object({
+      type: z.literal("competition.update"),
+      data: competitionData.extend({ id }),
     }),
     z.object({
       type: z.enum(["proposal.generate", "teams.confirm"]),

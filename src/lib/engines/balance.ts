@@ -1,5 +1,6 @@
 export interface BalancePlayer {
   id: string;
+  age?: number;
   level: "A" | "B" | "C" | null;
   group: "forward" | "back";
   position: string;
@@ -24,6 +25,8 @@ export interface BalanceTeam {
   strength: number;
   forwards: number;
   backs: number;
+  averageAge?: number;
+  minors?: number;
 }
 const strength = (p: BalancePlayer) =>
   p.level === "A" ? 3 : p.level === "C" ? 1 : 2;
@@ -101,6 +104,29 @@ export function generateBalancedTeams(
   let best: BalanceTeam[] | null = null;
   let bestCost = Infinity;
   const average = players.reduce((s, p) => s + strength(p), 0) / count;
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const knownAges = players.filter((p) => p.age !== undefined);
+  const averageAge = knownAges.length
+    ? knownAges.reduce((s, p) => s + p.age!, 0) / knownAges.length
+    : 0;
+  const minorRatio = knownAges.length
+    ? knownAges.filter((p) => p.age! < 18).length / knownAges.length
+    : 0;
+  const ageStats = (members: BalancePlayer[]) => {
+    const known = members.filter((p) => p.age !== undefined);
+    return {
+      count: known.length,
+      total: known.reduce((s, p) => s + p.age!, 0),
+      minors: known.filter((p) => p.age! < 18).length,
+    };
+  };
+  const ageCost = (members: BalancePlayer[]) => {
+    const ages = ageStats(members);
+    return (
+      Math.abs(ages.total - averageAge * ages.count) * 0.15 +
+      Math.abs(ages.minors - minorRatio * ages.count) * 5
+    );
+  };
   for (let attempt = 0; attempt < 80; attempt++) {
     const teams: BalanceTeam[] = Array.from({ length: count }, (_, index) => ({
       index,
@@ -150,6 +176,7 @@ export function generateBalancedTeams(
           size * 12 +
           power * 3 +
           Math.abs(fw - (size * 3) / 7) * 2 +
+          ageCost([...t.playerIds.map((id) => byId.get(id)!), ...unit]) +
           tie * (attempt ? 8 : 0)
         );
       };
@@ -171,6 +198,7 @@ export function generateBalancedTeams(
         (s, t) =>
           s +
           (t.strength - average) ** 2 +
+          ageCost(t.playerIds.map((id) => byId.get(id)!)) +
           Math.abs(t.forwards - (t.playerIds.length * 3) / 7) * 2,
         0,
       ) +
@@ -206,7 +234,16 @@ export function generateBalancedTeams(
   )
     warnings.push("Algún equipo no tiene medio scrum o apertura declarado.");
   return {
-    teams: best,
+    teams: best.map((team) => {
+      const ages = ageStats(team.playerIds.map((id) => byId.get(id)!));
+      return {
+        ...team,
+        averageAge: ages.count
+          ? Math.round(ages.total / ages.count)
+          : undefined,
+        minors: ages.minors,
+      };
+    }),
     warnings,
     score: Math.max(0, Math.round(100 - bestCost / players.length)),
     seed: options.seed,

@@ -39,22 +39,36 @@ const player = {
   age: 35,
 } as Registration;
 describe("Preparación del generador", () => {
-  it("prepara Adultos con las tres categorías adultas", () =>
-    expect(
-      competitionPresets(categories).find((p) => p.name === "Adultos")
-        ?.category_ids,
-    ).toEqual(["superior", "pad", "vet"]));
-  it("separa M19 en menores y mayores sin autorizar mezclas", () => {
+  it("prepara un solo Seven con todas las categorías y autorización explícita", () => {
     const presets = competitionPresets(categories);
-    expect(presets.find((p) => p.name === "M19 · Menores")).toMatchObject({
-      min_age: 17,
-      max_age: 17,
+    expect(presets).toHaveLength(1);
+    expect(presets[0]).toMatchObject({
+      name: "Seven Interno",
+      category_ids: ["superior", "pad", "vet", "m14", "m19"],
+      min_age: 13,
+      max_age: 90,
+      allow_mixed_ages: true,
     });
-    expect(presets.find((p) => p.name === "M19 · Mayores")).toMatchObject({
-      min_age: 18,
-      max_age: 19,
-    });
-    expect(presets.every((p) => p.min_age >= 18 || p.max_age < 18)).toBe(true);
+    expect(presets[0].authorization_note.length).toBeGreaterThan(10);
+  });
+  it("incluye tanto M14 como Veteranos en el mismo Seven autorizado", () => {
+    const mixed = { ...competition, ...competitionPresets(categories)[0] };
+    expect(
+      eligibleForCompetition(
+        { ...player, age: 14, category_id: "m14" },
+        mixed,
+        [],
+        [],
+      ),
+    ).toBe(true);
+    expect(
+      eligibleForCompetition(
+        { ...player, age: 60, category_id: "vet" },
+        mixed,
+        [],
+        [],
+      ),
+    ).toBe(true);
   });
   it("cuenta como habilitado a un adulto confirmado", () =>
     expect(eligibleForCompetition(player, competition, [], [])).toBe(true));

@@ -44,7 +44,8 @@ export async function POST(request: Request) {
         "Completá fecha, importe, alias y titular antes de abrir las inscripciones.",
       );
     if (
-      command.type === "competition.create" &&
+      (command.type === "competition.create" ||
+        command.type === "competition.update") &&
       (command.data.min_age > command.data.max_age ||
         (command.data.min_age < 18 &&
           command.data.max_age >= 18 &&
@@ -129,6 +130,14 @@ export async function POST(request: Request) {
     let type: string = command.type;
     let data: unknown = command.data;
     let preview: unknown = null;
+    if (command.type === "competition.update") {
+      if (!snapshot.competitions.some((c) => c.id === command.data.id))
+        throw new Error("La competencia no existe.");
+      if (snapshot.teams.some((t) => t.competition_id === command.data.id))
+        throw new Error(
+          "La competencia ya tiene equipos. Revisá sus planteles antes de cambiar quiénes participan.",
+        );
+    }
     if (command.type === "player.evaluate") {
       const player = snapshot.registrations.find(
         (p) => p.id === command.data.id,
@@ -187,6 +196,7 @@ export async function POST(request: Request) {
         );
         return {
           id: r.id,
+          age: r.age,
           level: r.level,
           group: position.group,
           position: position.name,

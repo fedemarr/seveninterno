@@ -67,6 +67,9 @@ try {
   await client.query(
     await readFile("supabase/migrations/005_padrences.sql", "utf8"),
   );
+  await client.query(
+    await readFile("supabase/migrations/006_competition_update.sql", "utf8"),
+  );
   const check = await client.query(
     "select (select count(*) from public.categories) as categories,(select count(*) from public.positions) as positions,(select count(*) from pg_tables where schemaname='public' and rowsecurity) as protected_tables",
   );

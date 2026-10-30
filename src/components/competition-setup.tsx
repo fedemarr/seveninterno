@@ -32,11 +32,8 @@ export function CompetitionSetup({
   );
   return (
     <div className="competition-quick-setup">
-      <h3>Elegí quiénes van a jugar</h3>
-      <p>
-        Creá el grupo con un toque. Los menores y los adultos se organizan por
-        separado.
-      </p>
+      <h3>Un solo Seven. Todas las categorías.</h3>
+      <p>Desde M14 hasta Veteranos, todos mezclados en equipos equilibrados.</p>
       <div className="competition-presets">
         {presets.map((preset) => {
           const count = players.filter(

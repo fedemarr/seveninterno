@@ -146,6 +146,12 @@ declare e public.events;actor_role text;op text;data jsonb;item jsonb;sub jsonb;
  elsif op='competition.create' then
    if exists(select 1 from jsonb_array_elements_text(data->'category_ids') x where not exists(select 1 from public.categories where id=x::uuid)) then raise exception 'CATEGORY';end if;
    insert into public.competitions(event_id,name,category_ids,min_age,max_age,allow_mixed_ages,authorization_note) values(e.id,data->>'name',array(select jsonb_array_elements_text(data->'category_ids'))::uuid[],(data->>'min_age')::int,(data->>'max_age')::int,(data->>'allow_mixed_ages')::boolean,data->>'authorization_note');
+ elsif op='competition.update' then
+   comp:=(data->>'id')::uuid;
+   if not exists(select 1 from public.competitions where id=comp and event_id=e.id) then raise exception 'NOT_FOUND';end if;
+   if exists(select 1 from public.teams where competition_id=comp) then raise exception 'COMPETITION_HAS_TEAMS';end if;
+   if exists(select 1 from jsonb_array_elements_text(data->'category_ids') x where not exists(select 1 from public.categories where id=x::uuid)) then raise exception 'CATEGORY';end if;
+   update public.competitions set name=data->>'name',category_ids=array(select jsonb_array_elements_text(data->'category_ids'))::uuid[],min_age=(data->>'min_age')::int,max_age=(data->>'max_age')::int,allow_mixed_ages=(data->>'allow_mixed_ages')::boolean,authorization_note=data->>'authorization_note',version=version+1 where id=comp;
  elsif op='proposal.save' then
    comp:=(data->>'competition_id')::uuid;
    if not exists(select 1 from public.competitions where id=comp and event_id=e.id) then raise exception 'COMPETITION';end if;

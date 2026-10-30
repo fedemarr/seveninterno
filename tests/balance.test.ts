@@ -16,6 +16,21 @@ const players = (n: number): BalancePlayer[] =>
   }));
 const options = { playersPerTeam: 7, substitutes: 3, seed: 42 };
 describe("Motor de equipos", () => {
+  it("equilibra edades y niveles en un Seven con menores y adultos mezclados", () => {
+    const list = players(20).map((p, i) => ({
+      ...p,
+      age: i < 14 ? 22 + (i % 10) : 14 + ((i - 14) % 4),
+    }));
+    const result = generateBalancedTeams(list, { ...options, teamCount: 2 });
+    expect(result.teams.map((t) => t.playerIds.length)).toEqual([10, 10]);
+    expect(result.teams.map((t) => t.minors)).toEqual([3, 3]);
+    expect(
+      Math.abs(result.teams[0].strength - result.teams[1].strength),
+    ).toBeLessThanOrEqual(2);
+    expect(
+      Math.abs(result.teams[0].averageAge! - result.teams[1].averageAge!),
+    ).toBeLessThanOrEqual(5);
+  });
   it("es reproducible y reparte jugadores sin duplicados", () => {
     const a = generateBalancedTeams(players(31), options),
       b = generateBalancedTeams(players(31), options);

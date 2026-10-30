@@ -619,22 +619,17 @@ export function AdminPanel({
                 </p>
                 {d.competitions.length ? (
                   <>
-                    {compSelect}
-                    <details className="add-player-group">
-                      <summary>Agregar otro grupo de jugadores</summary>
-                      <CompetitionSetup
-                        categories={d.categories}
-                        competitions={d.competitions}
-                        players={d.registrations}
-                        busy={loading}
-                        onCreate={(data) =>
-                          run(
-                            { type: "competition.create", data },
-                            "Grupo creado. Ya podés seleccionarlo para armar equipos.",
-                          )
-                        }
-                      />
-                    </details>
+                    {d.competitions.length > 1 ? (
+                      compSelect
+                    ) : (
+                      <div className="generator-readiness">
+                        <strong>Un solo Seven: de M14 a Veteranos</strong>
+                        <p>
+                          Todas las categorías juegan mezcladas. El generador
+                          reparte niveles, edades y posiciones.
+                        </p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <CompetitionSetup
@@ -645,7 +640,7 @@ export function AdminPanel({
                     onCreate={(data) =>
                       run(
                         { type: "competition.create", data },
-                        "Grupo creado. Ya podés generar los equipos.",
+                        "Seven preparado con todas las categorías.",
                       )
                     }
                   />
@@ -773,6 +768,12 @@ export function AdminPanel({
                             Nivel total {t.strength} · {t.forwards} forwards ·{" "}
                             {t.backs} backs
                           </small>
+                          {t.averageAge !== undefined && (
+                            <small>
+                              Edad promedio {t.averageAge} años · {t.minors}{" "}
+                              menores
+                            </small>
+                          )}
                           <p>{t.playerIds.map(playerName).join(", ")}</p>
                         </article>
                       ))}
@@ -1133,77 +1134,24 @@ export function AdminPanel({
               <section className="admin-card">
                 <h2>Competencias y elegibilidad</h2>
                 <p className="muted">
-                  Separá juveniles y adultos por defecto. Cualquier rango que
-                  cruce los 18 años requiere autorización explícita y
-                  documentada.
+                  Un solo Seven con todas las categorías, desde M14 hasta
+                  Veteranos. Los equipos mezclan edades y se equilibran por
+                  nivel A/B/C y posiciones.
                 </p>
-                <Form
-                  onSubmit={(fd) =>
-                    run({
-                      type: "competition.create",
-                      data: {
-                        name: text(fd, "name"),
-                        category_ids: fd.getAll("categories").map(String),
-                        min_age: asNumber(fd, "min"),
-                        max_age: asNumber(fd, "max"),
-                        allow_mixed_ages: checked(fd, "mixed"),
-                        authorization_note: text(fd, "note"),
-                      },
-                    })
-                  }
-                >
-                  <div className="form-grid">
-                    <Field label="Nombre">
-                      <input
-                        name="name"
-                        required
-                        placeholder="Ej. Adultos"
-                        maxLength={80}
-                      />
-                    </Field>
-                    <Field label="Categorías habilitadas">
-                      <select name="categories" multiple required>
-                        {d.categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="Edad mínima">
-                      <input
-                        name="min"
-                        type="number"
-                        min={13}
-                        max={90}
-                        defaultValue={18}
-                      />
-                    </Field>
-                    <Field label="Edad máxima">
-                      <input
-                        name="max"
-                        type="number"
-                        min={13}
-                        max={90}
-                        defaultValue={90}
-                      />
-                    </Field>
-                  </div>
-                  <label className="check-label">
-                    <input type="checkbox" name="mixed" />
-                    Agrupación autorizada que incluye menores y adultos
-                  </label>
-                  <Field label="Autorización y reglas de participación">
-                    <textarea
-                      name="note"
-                      placeholder="Documentar autorización si corresponde"
-                      maxLength={500}
-                    />
-                  </Field>
-                  <Button disabled={loading}>
-                    <Plus size={18} /> Crear competencia
-                  </Button>
-                </Form>
+                {!d.competitions.length && (
+                  <CompetitionSetup
+                    categories={d.categories}
+                    competitions={d.competitions}
+                    players={d.registrations}
+                    busy={loading}
+                    onCreate={(data) =>
+                      run(
+                        { type: "competition.create", data },
+                        "Seven preparado con todas las categorías.",
+                      )
+                    }
+                  />
+                )}
                 <div className="competition-list">
                   {d.competitions.map((c) => (
                     <div key={c.id}>
