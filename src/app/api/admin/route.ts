@@ -128,6 +128,28 @@ export async function POST(request: Request) {
     let type: string = command.type;
     let data: unknown = command.data;
     let preview: unknown = null;
+    if (command.type === "player.evaluate") {
+      const player = snapshot.registrations.find(
+        (p) => p.id === command.data.id,
+      );
+      if (!player || !player.active)
+        throw new Error(
+          "El jugador no existe o su inscripción está dada de baja.",
+        );
+      type = "player.update";
+      data = {
+        id: player.id,
+        level: command.data.level,
+        active: player.active,
+        notes: player.notes,
+        secondary_positions: player.secondary_positions,
+        available: player.available,
+        assignment_locked: player.assignment_locked,
+        excluded: player.excluded,
+        together_with: player.together_with,
+        separate_from: player.separate_from,
+      };
+    }
     if (command.type === "player.create")
       data = { ...command.data, phone: normalizedPhone(command.data.phone) };
     if (command.type === "player.details")

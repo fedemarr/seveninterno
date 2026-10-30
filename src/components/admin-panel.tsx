@@ -39,6 +39,7 @@ import {
 import { money } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { RegistrationForm } from "./registration-form";
+import { QuickEvaluations } from "./quick-evaluations";
 import { LateAssignment } from "./late-assignment";
 import {
   MatchCard,
@@ -438,9 +439,20 @@ export function AdminPanel({
               </div>
             </>
           )}
-          {["inscripciones", "pagos", "jugadores", "evaluaciones"].includes(
-            section,
-          ) && (
+          {section === "evaluaciones" && (
+            <QuickEvaluations
+              players={d.registrations}
+              busy={loading}
+              readOnly={d.role === "scorer"}
+              onRate={(player, level) =>
+                run(
+                  { type: "player.evaluate", data: { id: player.id, level } },
+                  `Nivel ${level} guardado para ${player.first_name} ${player.last_name}.`,
+                )
+              }
+            />
+          )}
+          {["inscripciones", "pagos", "jugadores"].includes(section) && (
             <>
               <div className="admin-toolbar">
                 <label className="search-input">

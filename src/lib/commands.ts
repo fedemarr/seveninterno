@@ -60,6 +60,10 @@ export const commandSchema = z.object({
         separate_from: ids,
       }),
     }),
+    z.object({
+      type: z.literal("player.evaluate"),
+      data: z.object({ id, level: z.enum(["A", "B", "C"]) }),
+    }),
     z.object({ type: z.literal("player.create"), data: registrationSchema }),
     z.object({
       type: z.literal("player.details"),
