@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { POSITIONS } from "./domain";
 export const phoneSchema = z
   .string()
   .trim()
@@ -14,6 +15,9 @@ export const registrationSchema = z
       .max(90),
     category_id: z.string().min(1, "Elegí una categoría."),
     position_id: z.string().min(1, "Elegí tu posición."),
+    secondary_position: z
+      .enum(["", ...POSITIONS.map((p) => p.name)])
+      .optional(),
     phone: phoneSchema,
     consent: z
       .boolean()

@@ -13,6 +13,7 @@ export function errorMessage(error: unknown) {
     RATE_LIMIT:
       "Recibimos varios intentos. Esperá 15 minutos y volvé a probar.",
     CATEGORY_AGE: "La edad no corresponde a la categoría seleccionada.",
+    POSITION: "Elegí posiciones válidas y distintas para principal y secundaria.",
     REMOVE_FROM_TEAM_FIRST:
       "Quitá al jugador de su equipo antes de darlo de baja o revertir el pago.",
     TEAMS_ALREADY_EXIST:

@@ -16,6 +16,22 @@ const input = {
   website: "",
 };
 describe("Inscripción y elegibilidad", () => {
+  it("accepts an optional secondary position from the position list", () => {
+    expect(
+      registrationSchema.safeParse({ ...input, secondary_position: "Apertura" })
+        .success,
+    ).toBe(true);
+    expect(
+      registrationSchema.safeParse({ ...input, secondary_position: "" })
+        .success,
+    ).toBe(true);
+    expect(
+      registrationSchema.safeParse({
+        ...input,
+        secondary_position: "Inventada",
+      }).success,
+    ).toBe(false);
+  });
   it("valida adulto sin pedir fecha de nacimiento ni nivel", () =>
     expect(registrationSchema.parse(input)).toEqual(input));
   it.each([0, 12, 18.5, 91])("rechaza edad inválida %s", (age) =>

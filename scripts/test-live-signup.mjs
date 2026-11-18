@@ -65,6 +65,7 @@ try {
       age: c.min_age,
       category_id: c.id,
       position_id: initial.positions[0].id,
+      secondary_position: initial.positions[1].name,
       phone: "0000099" + String(i).padStart(3, "0"),
       consent: true,
       public_consent: false,
@@ -115,6 +116,13 @@ try {
     assert.equal(Number(payment.amount), Number(c.registration_fee));
   }
   const state = await snapshot();
+  for (const id of created)
+    assert.ok(
+      state.registrations
+        .find((r) => r.id === id)
+        .secondary_positions.includes(initial.positions[1].name),
+      "Secondary position preserved after grading and payment",
+    );
   for (const id of created)
     assert.ok(
       state.members.some((m) => m.registration_id === id),

@@ -88,6 +88,8 @@ La demostración de 144 jugadores y su fixture se eliminó antes de abrir las in
 
 Evento: sábado 12 de diciembre de 2026. M14: $12.000; M15/M16/M17: $15.000; M19/PADRENCES/Vetecedros/Plantel Superior: $20.000. La migración 009 guarda los precios en categorías, congela el importe al inscribirse y lo utiliza también en altas presenciales y contabilidad. Cambiar el importe general no modifica deudas existentes. `scripts/test-fees-db.mjs` comprueba las ocho categorías, duplicados y pagos dentro de una transacción que revierte. `scripts/test-onsite-db.mjs` comprueba altas presenciales y revierte todas las pruebas.
 
+La migración 010 agrega posición secundaria opcional al alta pública, administrativa y presencial. Se valida contra el catálogo, debe ser distinta de la principal y se guarda en la evaluación privada que utiliza el balanceador de equipos. El alta no permite que el participante elija su nivel A/B/C.
+
 ## Vercel
 
 El proyecto usa Node 24 y región São Paulo (`gru1`). Cargar las cuatro variables indicadas para producción y previews; la clave de servicio nunca lleva prefijo NEXT_PUBLIC. El helper `scripts/configure-vercel.mjs` las envía al CLI mediante stdin. `vercel --prod` publica la aplicación. Vincular el repositorio para despliegues futuros. No subir `.env.local` ni la contraseña de PostgreSQL.

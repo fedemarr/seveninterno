@@ -79,6 +79,9 @@ try {
   await client.query(
     await readFile("supabase/migrations/009_category_fees.sql", "utf8"),
   );
+  await client.query(
+    await readFile("supabase/migrations/010_secondary_position.sql", "utf8"),
+  );
   const check = await client.query(
     "select (select count(*) from public.categories) as categories,(select count(*) from public.positions) as positions,(select count(*) from pg_tables where schemaname='public' and rowsecurity) as protected_tables",
   );

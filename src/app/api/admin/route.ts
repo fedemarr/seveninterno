@@ -176,7 +176,9 @@ export async function POST(request: Request) {
         version: 0,
         level: command.data.level || null,
         notes: "Alta presencial desde el panel de equipos.",
-        secondary_positions: [],
+        secondary_positions: input.secondary_position
+          ? [input.secondary_position]
+          : [],
         available: true,
         assignment_locked: false,
         excluded: false,

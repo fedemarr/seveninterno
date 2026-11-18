@@ -61,6 +61,7 @@ export function RegistrationForm({
       phone: "",
       category_id: "",
       position_id: "",
+      secondary_position: "",
       consent: false,
       public_consent: false,
       guardian_consent: false,
@@ -69,6 +70,7 @@ export function RegistrationForm({
     },
   });
   const selectedCategory = useWatch({ control, name: "category_id" });
+  const primaryPosition = useWatch({ control, name: "position_id" });
   const age = useWatch({ control, name: "age" }),
     values = getValues();
   async function submit(input: RegistrationInput) {
@@ -253,6 +255,31 @@ export function RegistrationForm({
             ))}
           </select>
           {fieldError("position_id")}
+        </label>
+        <label>
+          Posición secundaria (opcional)
+          <select
+            {...register("secondary_position")}
+            aria-invalid={!!errors.secondary_position}
+          >
+            <option value="">Sin posición secundaria</option>
+            {(["forward", "back"] as const).map((g) => (
+              <optgroup key={g} label={g === "forward" ? "Forwards" : "Backs"}>
+                {positions
+                  .filter((p) => p.group === g)
+                  .map((p) => (
+                    <option
+                      key={p.id}
+                      value={p.name}
+                      disabled={p.id === primaryPosition}
+                    >
+                      {p.name}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </select>
+          {fieldError("secondary_position")}
         </label>
         <label>
           Teléfono de contacto *

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import type { AdminSnapshot } from "@/lib/data";
 import type { AdminCommand } from "@/lib/commands";
+import type { RegistrationInput } from "@/lib/validation";
 import {
   DEFAULT_SETTINGS,
   EVENT_STATES,
@@ -560,6 +561,11 @@ export function AdminPanel({
                                 ?.name
                             }
                           </small>
+                          {r.secondary_positions.length > 0 && (
+                            <small>
+                              Secundaria: {r.secondary_positions.join(", ")}
+                            </small>
+                          )}
                         </td>
                         <td>
                           <select
@@ -1773,6 +1779,10 @@ export function AdminPanel({
                   age: editing.age,
                   category_id: editing.category_id,
                   position_id: editing.position_id,
+                  secondary_position:
+                    (editing
+                      .secondary_positions[0] as RegistrationInput["secondary_position"]) ??
+                    "",
                   phone: editing.phone,
                   consent: true,
                   public_consent: editing.public_consent,

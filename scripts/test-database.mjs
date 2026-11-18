@@ -102,6 +102,34 @@ try {
     ])
   ).rows[0];
   check(stored.payment_status === "PENDIENTE_PAGO", "Starts unpaid");
+  const secondaryInput = {
+    ...input,
+    last_name: "SecondaryRollback",
+    secondary_position: "Apertura",
+  };
+  const withSecondary = await register(secondaryInput);
+  check(Boolean(withSecondary.id), "Accepts a secondary position");
+  check(
+    (
+      await db.query(
+        "select secondary_positions from public.player_evaluations where registration_id=$1",
+        [withSecondary.id],
+      )
+    ).rows[0].secondary_positions.includes("Apertura"),
+    "Secondary position available to the team balancer",
+  );
+  await expectedFailure(
+    "select public.register_player($1,$2)",
+    [
+      {
+        ...input,
+        last_name: "SamePositionRollback",
+        secondary_position: "Wing",
+      },
+      "secondary-test",
+    ],
+    /POSITION/,
+  );
   await expectedFailure(
     "select public.register_player($1,$2)",
     [
@@ -437,7 +465,7 @@ try {
         [e.id],
       )
     ).rows[0].n ===
-      baseline.registrations.length + 3,
+      baseline.registrations.length + 4,
     "Preserves previous edition registrations",
   );
   await db.query("rollback");
