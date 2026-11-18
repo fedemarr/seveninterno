@@ -13,6 +13,17 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Inscripción" };
 export default async function Inscription() {
   const data = await getPublic();
+  const prices = new Map<number, string[]>();
+  for (const category of data.categories) {
+    const amount = registrationFee(data.event, category);
+    const names = prices.get(amount) ?? [];
+    names.push(
+      category.name === "Vetecedros"
+        ? "Vetecedros / exjugadores"
+        : category.name,
+    );
+    prices.set(amount, names);
+  }
   return (
     <>
       <Header />
@@ -56,20 +67,19 @@ export default async function Inscription() {
               </span>
             </div>
           </div>
-          <div className="registration-facts">
-            {data.categories.map((category) => (
-              <div key={category.id}>
-                <span>
-                  {category.name}
-                  <strong>
-                    {registrationFee(data.event, category) > 0
-                      ? money(registrationFee(data.event, category))
-                      : "Importe a confirmar"}
-                  </strong>
-                </span>
-              </div>
-            ))}
-          </div>
+          <dl
+            className="registration-prices"
+            aria-label="Precios por categoría"
+          >
+            {[...prices]
+              .sort(([a], [b]) => a - b)
+              .map(([amount, names]) => (
+                <div key={amount}>
+                  <dt>{names.join(" · ")}</dt>
+                  <dd>{amount > 0 ? money(amount) : "Importe a confirmar"}</dd>
+                </div>
+              ))}
+          </dl>
           <small>
             ¿Necesitás ayuda?{" "}
             <a

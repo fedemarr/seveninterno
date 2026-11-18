@@ -1561,6 +1561,29 @@ a:hover {
   color: var(--yellow);
   margin-top: 13px;
 }
+.registration-prices {
+  margin: 24px 0;
+}
+.registration-prices > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+}
+.registration-prices dt {
+  color: #a9c8ee;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.registration-prices dd {
+  margin: 0;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
 .registration-facts {
   margin: 34px 0;
 }
