@@ -88,10 +88,35 @@ function apply(ctx: AutoTeamContext) {
   };
 }
 describe("Equipos automáticos al confirmar jugadores", () => {
-  it("crea el primer equipo aunque todavía no haya siete confirmados", () => {
+  it("prepara cuatro borradores desde el primer confirmado", () => {
     const result = planAutomaticTeams(context(1), competition, allocator());
-    expect(result.plan?.teams).toHaveLength(1);
-    expect(result.plan?.teams[0].members).toHaveLength(1);
+    expect(result.plan?.teams).toHaveLength(4);
+    expect(result.plan!.teams.flatMap((t) => t.members)).toHaveLength(1);
+  });
+  it("reparte los primeros tres A en tres equipos diferentes", () => {
+    const ctx = context(3);
+    ctx.registrations.forEach((p) => {
+      p.level = "A";
+    });
+    const result = planAutomaticTeams(ctx, competition, allocator());
+    expect(result.plan?.teams).toHaveLength(4);
+    expect(result.plan!.teams.map((t) => t.members.length).sort()).toEqual([
+      0, 1, 1, 1,
+    ]);
+  });
+  it("mantiene repartidos los niveles al confirmar nuevos jugadores", () => {
+    const ctx = context(12);
+    const result = planAutomaticTeams(ctx, competition, allocator());
+    for (const team of result.plan!.teams) {
+      expect(team.members).toHaveLength(3);
+      const levels = team.members
+        .map(
+          (m) =>
+            ctx.registrations.find((p) => p.id === m.registration_id)!.level,
+        )
+        .sort();
+      expect(levels).toEqual(["A", "B", "C"]);
+    }
   });
   it("crea cuatro equipos al llegar a 32 confirmados y mantiene los IDs anteriores", () => {
     const first = apply(context(20));
@@ -173,10 +198,10 @@ describe("Equipos automáticos al confirmar jugadores", () => {
     expect(result.plan!.teams).toHaveLength(1);
   });
   it("avisa cuando todos los planteles del fixture alcanzaron la capacidad", () => {
-    const initial = apply(context(20));
+    const initial = apply(context(40));
     initial.teams[0].published = true;
     const result = planAutomaticTeams(
-      { ...initial, registrations: context(21).registrations },
+      { ...initial, registrations: context(41).registrations },
       { ...competition, auto_team_capacity: 10 },
       allocator(),
     );

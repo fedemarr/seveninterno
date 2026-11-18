@@ -104,7 +104,7 @@ export function AutomaticTeams({
         <p className="muted">
           {frozen
             ? "El fixture o los planteles ya están preparados: los nuevos confirmados se suman a equipos existentes. Se conservan los partidos."
-            : "Mientras sean borradores, se reparten los confirmados y se crean nuevos equipos cuando alcanza la cantidad. No necesitás generar propuestas."}
+            : "Desde el inicio se preparan al menos 4 equipos en borrador y se reparten los confirmados por nivel, edad y posición. Se suman equipos cuando crece la cantidad de jugadores; no necesitás generar propuestas."}
         </p>
         <p className="muted">
           Los jugadores sin A/B/C usan nivel B provisional. Al evaluarlos, se

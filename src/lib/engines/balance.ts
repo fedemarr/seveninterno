@@ -54,7 +54,7 @@ export function generateBalancedTeams(
     );
   if (
     players.length <
-      count * (options.allowIncomplete ? 1 : options.playersPerTeam) ||
+      count * (options.allowIncomplete ? 0 : options.playersPerTeam) ||
     players.length > count * capacity
   )
     throw new Error(
@@ -194,7 +194,7 @@ export function generateBalancedTeams(
       teams.some(
         (t) =>
           t.playerIds.length <
-          (options.allowIncomplete ? 1 : options.playersPerTeam),
+          (options.allowIncomplete ? 0 : options.playersPerTeam),
       )
     )
       continue;

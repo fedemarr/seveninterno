@@ -174,13 +174,9 @@ export function planAutomaticTeams(
     };
   }
   const targetSize = competition.auto_team_size ?? 10;
-  const desired = Math.max(
-    1,
-    Math.min(
-      Math.max(1, Math.floor(eligible.length / 7)),
-      Math.ceil(eligible.length / targetSize),
-    ),
-  );
+  // Prepare the tournament's minimum four draft squads from the first signup.
+  // Waiting for full sevens concentrates the first confirmed players together.
+  const desired = Math.max(4, Math.ceil(eligible.length / targetSize));
   const count = Math.max(
     existing.length,
     desired,
