@@ -51,7 +51,7 @@ export default async function Inscription() {
                     }).format(new Date(`${data.event.event_date}T12:00:00Z`))
                   : "Fecha a confirmar"}
               </time>
-              <strong>Comienza a las 10:00 hs</strong>
+              <strong>Comienza a las 11:00 hs</strong>
             </div>
           </div>
           <p>
