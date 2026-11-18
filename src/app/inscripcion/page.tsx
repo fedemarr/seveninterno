@@ -3,6 +3,7 @@ import { RegistrationForm } from "@/components/registration-form";
 import { getPublic } from "@/lib/data";
 import {
   ArrowDownRight,
+  CalendarDays,
   MessageCircle,
   ShieldCheck,
   Wallet,
@@ -37,6 +38,22 @@ export default async function Inscription() {
             <br />
             <span>con vos.</span>
           </h1>
+          <div className="registration-schedule">
+            <CalendarDays size={24} aria-hidden="true" />
+            <div>
+              <time dateTime={data.event.event_date ?? undefined}>
+                {data.event.event_date
+                  ? new Intl.DateTimeFormat("es-AR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      timeZone: "UTC",
+                    }).format(new Date(`${data.event.event_date}T12:00:00Z`))
+                  : "Fecha a confirmar"}
+              </time>
+              <strong>Comienza a las 10:00 hs</strong>
+            </div>
+          </div>
           <p>
             Completá tus datos y preparate para volver a encontrarnos en la
             cancha.

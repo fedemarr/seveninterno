@@ -1564,6 +1564,30 @@ a:hover {
 .registration-prices {
   margin: 24px 0;
 }
+.registration-schedule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--yellow);
+  color: var(--yellow);
+}
+.registration-schedule time {
+  display: block;
+  font-size: 15px;
+  line-height: 1.5;
+  text-transform: capitalize;
+}
+.registration-schedule strong {
+  display: block;
+  color: white;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.registration-schedule > svg {
+  flex-shrink: 0;
+}
 .registration-prices > div {
   display: flex;
   align-items: baseline;
