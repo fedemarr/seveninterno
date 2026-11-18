@@ -30,6 +30,10 @@ export default async function Inscription() {
             Completá tus datos y preparate para volver a encontrarnos en la
             cancha.
           </p>
+          <p>
+            Durante la jornada vamos a contar con comida, frutas, barras de
+            cereal y bebidas.
+          </p>
           <ArrowDownRight size={56} strokeWidth={1} />
           <div className="registration-facts">
             <div>

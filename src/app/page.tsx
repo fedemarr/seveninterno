@@ -9,6 +9,7 @@ import {
   Users,
   Trophy,
   Clock3,
+  Utensils,
 } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 import { ClubVideo } from "@/components/video";
@@ -159,6 +160,18 @@ export default async function Home() {
                 </p>
               </div>
               <span className="item-number">03</span>
+            </article>
+            <article>
+              <span className="feature-icon">
+                <Utensils size={24} />
+              </span>
+              <div>
+                <h3>Para disfrutar toda la jornada</h3>
+                <p>
+                  Vamos a contar con comida, frutas, barras de cereal y bebidas.
+                </p>
+              </div>
+              <span className="item-number">04</span>
             </article>
           </div>
         </section>
