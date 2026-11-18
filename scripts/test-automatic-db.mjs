@@ -52,6 +52,12 @@ try {
     (await db.query("select public.admin_snapshot() value")).rows[0].value;
   let state = await snapshot();
   const comp = state.competitions.find((c) => c.name === "Seven Interno");
+  if (state.teams.filter((t) => t.competition_id === comp.id).length < 2) {
+    await db.query(
+      "insert into public.teams(event_id,competition_id,name) values($1,$2,'Rollback automatic 1'),($1,$2,'Rollback automatic 2')",
+      [state.event.id, comp.id],
+    );
+  }
   await db.query("delete from public.matches where competition_id=$1", [
     comp.id,
   ]);

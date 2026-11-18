@@ -84,7 +84,9 @@ npm run build
 
 La revisión visual automatizada en navegador no pudo ejecutarse en el entorno de implementación. Se verificaron respuestas HTTP y compilación, pero no se afirma una prueba visual de escritorio o celular. Revisar especialmente reproducción de video y formularios en un celular real antes de difundir el enlace.
 
-La prueba solicitada por el organizador usa **144 jugadores ficticios, 12 equipos de 12, tres zonas de cuatro y tres copas de cuatro equipos**. Cada equipo juega tres partidos de grupos. Oro recibe a los tres primeros y el mejor segundo; Plata recibe a los siguientes cuatro; Leche, a los cuatro restantes. Cada copa tiene dos semifinales y una final. El fixture se guarda en borrador: no se inventan resultados ni clasificados. `scripts/seed-tournament-demo.mjs` prepara participantes marcados como PRUEBA sin tocar equipos publicados ni fixtures existentes; necesita conexión por stdin oculto. `scripts/test-onsite-db.mjs` verifica que el alta presencial, pago opcional, evaluación y destino se guarden de manera atómica y revierte todas las pruebas.
+La demostración de 144 jugadores y su fixture se eliminó antes de abrir las inscripciones reales. `scripts/prepare-live.mjs` identifica exclusivamente jugadores con nombre PRUEBA y teléfono ficticio, respalda las tablas en `backups/` (ignorado por Git y Vercel) y rechaza eliminar equipos con integrantes reales o partidos publicados/con resultados. Sin argumentos solo inspecciona; `--clean` limpia la demostración y `--open` comprueba los precios antes de abrir. Recibe credenciales por stdin oculto.
+
+Evento: sábado 12 de diciembre de 2026. M14: $12.000; M15/M16/M17: $15.000; M19/PADRENCES/Vetecedros/Plantel Superior: $20.000. La migración 009 guarda los precios en categorías, congela el importe al inscribirse y lo utiliza también en altas presenciales y contabilidad. Cambiar el importe general no modifica deudas existentes. `scripts/test-fees-db.mjs` comprueba las ocho categorías, duplicados y pagos dentro de una transacción que revierte. `scripts/test-onsite-db.mjs` comprueba altas presenciales y revierte todas las pruebas.
 
 ## Vercel
 
@@ -96,7 +98,7 @@ Antes del torneo, revisar backups de Supabase en el dashboard y la disponibilida
 
 ## Pendientes de organización y mejoras sugeridas
 
-- Completar fecha e importe y revisar elegibilidad, consentimiento y reglas antes de abrir inscripciones.
+- Revisar elegibilidad, consentimiento y reglas de participación con la organización.
 - Probar el recorrido con Fede y Bauti en un celular real; revisar tiempos y canchas de cada propuesta antes de publicarla.
 - Definir retención de datos y ejecutar el procedimiento de backup previo al evento.
 - Como mejoras visuales futuras: escudos propios por equipo y fotos autorizadas para cada edición.

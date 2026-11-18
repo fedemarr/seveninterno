@@ -128,7 +128,7 @@ export default async function Home() {
               <div>
                 <h3>Hay un lugar para vos</h3>
                 <p>
-                  Plantel Superior, PADRENCES, Veteranos y juveniles de M14 a
+                  Plantel Superior, PADRENCES, Vetecedros y juveniles de M14 a
                   M19: todos mezclados en un mismo Seven.
                 </p>
               </div>

@@ -13,6 +13,7 @@ import {
 import { registrationSchema, type RegistrationInput } from "@/lib/validation";
 import type { Category, EventConfig, Position } from "@/lib/domain";
 import { money } from "@/lib/utils";
+import { registrationFee } from "@/lib/pricing";
 import { Button } from "./ui/button";
 interface Receipt {
   id: string;
@@ -67,6 +68,7 @@ export function RegistrationForm({
       ...initial,
     },
   });
+  const selectedCategory = useWatch({ control, name: "category_id" });
   const age = useWatch({ control, name: "age" }),
     values = getValues();
   async function submit(input: RegistrationInput) {
@@ -319,6 +321,16 @@ export function RegistrationForm({
           </span>
         </label>
       </div>
+      <p className="form-alert" role="status">
+        {selectedCategory
+          ? `Inscripción: ${money(
+              registrationFee(
+                event,
+                categories.find((c) => c.id === selectedCategory),
+              ),
+            )}`
+          : "Seleccioná tu categoría para ver el importe de inscripción."}
+      </p>
       {extraFields}
       {error && (
         <p className="form-alert error" role="alert">

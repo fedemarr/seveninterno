@@ -33,7 +33,7 @@ export function CompetitionSetup({
   return (
     <div className="competition-quick-setup">
       <h3>Un solo Seven. Todas las categorías.</h3>
-      <p>Desde M14 hasta Veteranos, todos mezclados en equipos equilibrados.</p>
+      <p>Desde M14 hasta Vetecedros, todos mezclados en equipos equilibrados.</p>
       <div className="competition-presets">
         {presets.map((preset) => {
           const count = players.filter(

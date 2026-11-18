@@ -1,7 +1,7 @@
 export const CATEGORIES = [
   "Plantel Superior",
   "PADRENCES",
-  "Veteranos",
+  "Vetecedros",
   "M14",
   "M15",
   "M16",
@@ -55,6 +55,7 @@ export interface EventConfig {
   version: number;
 }
 export interface Category {
+  registration_fee?: number | null;
   id: string;
   name: string;
   min_age: number;

@@ -16,7 +16,7 @@ export interface CompetitionPreset {
 }
 
 export const MIXED_SEVEN_AUTHORIZATION =
-  "El organizador autoriza un unico Seven Interno con todas las categorias, desde M14 hasta Veteranos, con equipos equilibrados por nivel, posiciones y edades.";
+  "El organizador autoriza un unico Seven Interno con todas las categorias, desde M14 hasta Vetecedros, con equipos equilibrados por nivel, posiciones y edades.";
 /** This event is explicitly configured by its organizer as one mixed-age Seven. */
 export function competitionPresets(
   categories: Category[],

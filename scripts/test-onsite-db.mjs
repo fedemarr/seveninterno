@@ -42,6 +42,10 @@ try {
       [e.id],
     )
   ).rows[0];
+  await db.query(
+    "insert into public.teams(event_id,competition_id,name) values($1,$2,'Rollback onsite')",
+    [e.id, comp.id],
+  );
   const team = (
     await db.query(
       "select id from public.teams where competition_id=$1 limit 1",

@@ -671,7 +671,7 @@ export function AdminPanel({
                       compSelect
                     ) : (
                       <div className="generator-readiness">
-                        <strong>Un solo Seven: de M14 a Veteranos</strong>
+                        <strong>Un solo Seven: de M14 a Vetecedros</strong>
                         <p>
                           Todas las categorías juegan mezcladas. El generador
                           reparte niveles, edades y posiciones.
@@ -1183,7 +1183,7 @@ export function AdminPanel({
                 <h2>Competencias y elegibilidad</h2>
                 <p className="muted">
                   Un solo Seven con todas las categorías, desde M14 hasta
-                  Veteranos. Los equipos mezclan edades y se equilibran por
+                  Vetecedros. Los equipos mezclan edades y se equilibran por
                   nivel A/B/C y posiciones.
                 </p>
                 {!d.competitions.length && (
@@ -1563,6 +1563,15 @@ export function AdminPanel({
             <>
               <section className="admin-card">
                 <h2>Evento e inscripciones</h2>
+                <p>
+                  Precios por categoría:{" "}
+                  {d.categories
+                    .map(
+                      (c) =>
+                        `${c.name}: $${Number(c.registration_fee ?? d.event.amount).toLocaleString("es-AR")}`,
+                    )
+                    .join(" · ")}
+                </p>
                 <Form
                   key={d.event.version}
                   onSubmit={(fd) =>
@@ -1611,7 +1620,7 @@ export function AdminPanel({
                         defaultValue={d.event.event_date ?? ""}
                       />
                     </Field>
-                    <Field label="Importe de inscripción (ARS)">
+                    <Field label="Importe general (ARS; las categorías tienen su propio precio)">
                       <input
                         type="number"
                         name="amount"

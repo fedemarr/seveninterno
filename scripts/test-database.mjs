@@ -205,7 +205,8 @@ try {
   const finances = (await db.query("select public.admin_snapshot() as value"))
     .rows[0].value;
   check(
-    Number(finances.payment_total) === Number(baseline.payment_total) + 1000,
+    Number(finances.payment_total) ===
+      Number(baseline.payment_total) + Number(stored.quoted_amount),
     "Revenue uses recorded payment amount",
   );
   await apply("competition.create", {

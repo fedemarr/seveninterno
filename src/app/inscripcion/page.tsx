@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { money } from "@/lib/utils";
+import { registrationFee } from "@/lib/pricing";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Inscripción" };
 export default async function Inscription() {
@@ -35,11 +36,7 @@ export default async function Inscription() {
               <Wallet size={21} />
               <span>
                 Inscripción
-                <strong>
-                  {data.event.amount > 0
-                    ? money(data.event.amount)
-                    : "Importe a confirmar"}
-                </strong>
+                <strong>Según tu categoría</strong>
               </span>
             </div>
             <div>
@@ -54,6 +51,20 @@ export default async function Inscription() {
                 Confirmación manual<strong>A cargo de la organización</strong>
               </span>
             </div>
+          </div>
+          <div className="registration-facts">
+            {data.categories.map((category) => (
+              <div key={category.id}>
+                <span>
+                  {category.name}
+                  <strong>
+                    {registrationFee(data.event, category) > 0
+                      ? money(registrationFee(data.event, category))
+                      : "Importe a confirmar"}
+                  </strong>
+                </span>
+              </div>
+            ))}
           </div>
           <small>
             ¿Necesitás ayuda?{" "}
